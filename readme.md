@@ -2,6 +2,9 @@
 
 Enhance the Image class by providing the dominant color from an image. Uses [Color Thief PHP](https://github.com/ksubileau/color-thief-php).
 
+The latest version only supports SilverStripe 4, see the `1.0` branch for a SilverStripe 3.x compatible version.
+
+
 ## Usage
 
 Adds the `DominantColor()` method to `Image` which the primary dominant color of this Image as hex (i.e. `'#bada55'`.)

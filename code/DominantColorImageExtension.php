@@ -1,4 +1,5 @@
 <?php
+namespace JacobBuck\SilverStripeDominantColor;
 
 use ColorThief\ColorThief;
 
