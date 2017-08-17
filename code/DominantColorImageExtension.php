@@ -1,43 +1,59 @@
 <?php
+
 namespace JacobBuck\SilverStripeDominantColor;
 
 use ColorThief\ColorThief;
+use SilverStripe\Assets\Folder;
+use SilverStripe\Core\Extension;
 
 class DominantColorImageExtension extends Extension
 {
+
+    /**
+     * @var array
+     */
+    private static $db = [
+        'DominantColor' => 'Varchar(255)'
+    ];
+
     /**
      * Calculation accuracy of the dominant color
      * @var Int
      */
     static public $quality = 10;
 
+
     /**
      * Get the primary dominant color of this Image
      * @return String color as hex i.e. #ff0000
      */
-    public function DominantColor()
+    protected function setDominantColor()
     {
-        $sourceImage = $this->owner->getFullPath();
-
-        $cache = SS_Cache::factory(get_called_class());
-        $cacheKey = md5($this->owner->ID . $sourceImage);
-
-        $color = $cache->load($cacheKey);
-
-        if ($color) return $color;
+        $sourceImage = $this->getPath();
 
         $color = ColorThief::getColor(
-            $sourceImage = $sourceImage,
-            $quality = Config::inst()->get(get_called_class(), 'quality')
+            $sourceImage,
+            $quality = '10'
         );
 
-        $color = self::colorToHex($color);
+        $hexColor = self::colorToHex($color);
 
-        if ($color) {
-            $cache->save($color, $cacheKey);
+        return $hexColor;
+    }
+
+    /**
+     * Getting the path (! the only way I found...)
+     * @return string
+     */
+    protected function getPath()
+    {
+        $hash = substr($this->owner->getHash(), 0, 10);
+        $parent = $this->owner->getParent();
+        $folder = '';
+        if ($parent instanceof Folder) {
+            $folder = $parent->Name . '/';
         }
-
-        return $color;
+        return ASSETS_PATH . "/.protected/" . $folder . $hash . "/" . $this->owner->Name;
     }
 
     /**
@@ -50,5 +66,17 @@ class DominantColorImageExtension extends Extension
         if (empty($color)) return false;
         $hex = dechex(($color[0] << 16) | ($color[1] << 8) | $color[2]);
         return '#' . str_pad($hex, 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Set the DominantColor
+     */
+    public function onBeforeWrite()
+    {
+        if ($this->owner->ID == 0) {
+            $color = $this->setDominantColor();
+            $this->owner->DominantColor = $color;
+            $this->owner->DominantColorHex = $this->owner->getHash();
+        }
     }
 }
